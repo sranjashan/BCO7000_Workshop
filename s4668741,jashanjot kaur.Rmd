@@ -1,0 +1,186 @@
+---
+title: "Assessment 1"
+author: "Jashanjot Kaur , s4668741"
+date: "11/12/2021"
+output: html_document
+
+ ### RMarkdown
+ ## Turn your analyses into high quality documents, reports, presentations and dashboards.R Markdown documents are fully reproducible. Use a productive notebook interface to weave together narrative text and code to produce elegantly formatted output.
+```{r}
+library(tidyverse)
+library(knitr)
+library(skimr)
+
+```
+
+ 
+## Insert an R chunk and create a variable with this dataset
+https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-09-04/fastfood_calories.csv
+
+## The name of the variable should be `fastfood`
+```{r}
+fastfood <-read_csv ('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-09-04/fastfood_calories.csv')
+```
+
+## Display the first 10 rows of the dataset using head() and kable(). 
+## Display the first 10 rows of the dataset and the first 5 variables
+```{r}
+kable(head(fastfood,10), "pipe")
+kable(fastfood[1:10,1:5])
+```
+
+## Display the observations that has more than 1000 calories
+```{r}
+fastfood%>%
+filter(calories>1000)
+```
+
+## Arrange observations with more than 40 in total_fat and more than 80 in total_carb in the descending order and save them to a new variable (dataset) called `dont_eat_this`
+# In arranging the variables, the only one variable out of two will arrange in the descending order. the function will not work for both of the variables.
+```{r}
+`dont_eat_this`<- fastfood %>%
+ arrange(desc(total_fat,total_carb))%>%
+  filter(total_fat>40 ,total_carb>80)
+```
+
+## Using the initial dataset variable, use `case_when()` to create a new variable `heavy_food` which is equal to "heavy" when total calories are greater than 500, "low" when total calories are less than 250 and "average" for all other cases. Count the number of observations in each created category.
+```{r}
+fastfood%>%
+  select(restaurant,item,calories)%>%
+  mutate(heavy_food=case_when(calories>"500"~ "heavy",calories<"250"~"low",T~"average"))
+
+```
+
+## Display the types of variables in the dataset using `skimr` package 
+```{r}
+ skim(fastfood)
+```
+    
+## Present the count observations from each restaurant in a descending order
+## Show the number of distnct items on a menu in the dataset  
+```{r}
+fastfood%>%
+  count(restaurant,sort= TRUE)%>%
+  arrange(desc(n))%>%
+  kable()
+  
+  n_distinct(fastfood$item)
+
+```
+
+## Using groupings (group_by()), summarise and display the average number of calories for each restaurant.
+```{r}
+fastfood%>%
+  group_by(restaurant)%>%
+  summarise(average_calories = mean(calories))%>%
+  ungroup()%>%
+  kable()
+
+```
+
+## Add variables to the dataset, which:
+-  calculates the average calories per type of restaurant and call it `average_calories`
+-  calculates the maximum total_fat per type of restaurant and call it `max_fat` -  calculates the minimum cholesterol per type of restaurant and call it `min_cholesterol` 
+```{r}
+ fastfood%>%
+   select(restaurant,calories,cholesterol,total_fat)%>%
+   group_by(restaurant)%>%
+   mutate(average_calories= mean(calories),max_fat=max(total_fat),min_cholesterol=min(cholesterol))%>%
+   ungroup()
+```
+
+## Display the data vis of total fat per each type of restaurant. Write a narration (2-3 sentences) why you believe this type of data viz presents such information best.
+ I use Bar Graph visualisation for this dataset because it show the data in very tidy manner . Moreover, it show clearly the exact count of the observation.
+```{r}
+ fastfood%>%
+   group_by(restaurant)%>%
+   ungroup()%>%
+   ggplot(aes(restaurant,total_fat))+
+   geom_col()+
+   labs(title = "Data Visualisation", caption = "Image1:Bar Graph")
+```
+
+## Add a variable to the dataset, which calculates the sum of cholesterol and sodium and call it `cholesterol_sodium`.
+```{r}
+fastfood%>%
+   select(restaurant,item,sodium,cholesterol)%>%
+   mutate(cholesterol_sodium=sum(sodium,cholesterol))
+   
+## to remove variable salad 
+fastfood%>%
+select(-salad)
+```
+
+## Use observations for Mcdonalds to plot sugar variable against protein with `geom_point()` 
+There are some missing values in variable protein. So, first i have to filter is out first.
+```{r}
+fastfood%>%
+  filter(protein!="NA")%>%
+  group_by(restaurant)%>%
+   ungroup()%>%
+  ggplot(aes(protein,sugar,fill=restaurant))+
+  geom_point()+
+  facet_wrap(~restaurant)
+
+```
+
+## Identify variable(s) which should be factors and transform their type into a factor variable.
+```{r}
+skim(fastfood)
+
+fastfood$restaurant<-as_factor(fastfood$restaurant)
+fastfood$item<-as_factor(fastfood$item)
+fastfood$salad<-as_factor(fastfood$salad)
+
+class(fastfood$restaurant)
+class(fastfood$item)
+class(fastfood$salad)
+
+```
+
+ Create two new variables:
+
+## Read about `cut_number()` function using Help and add a new variable to the dataset `calories_type`. Use `calories` variable for `cut_number()` function to split it into 3 categories `n=3`, add labels `labels=c("low", "med", "high")` and make the dataset ordered by arranging it according to calories.
+```{r}
+  table(fastfood$calories)%>%
+ cut(breaks=3,labels=c("low", "med", "high"))
+```
+I didn't get the point, how cut_number function will work? so,i use another function to perform this task. But in this function ,i am not able to save the new variable in the data. that"s why i am leaving this question here and also didn't able to complete the next question.
+
+## The second variable should show the percentage of `trans_fat` in `total_fat`. Add the variable to the dataset and call it `trans_fat_percent`.
+```{r}
+ new_data<-fastfood%>%
+  mutate(trans_fat_percent=mean(trans_fat))
+                 
+```
+
+## Create a dataviz that shows the distribution of `trans_fat` in food items for each type of restaurant.
+```{r}
+
+    fastfood%>%
+      group_by(restaurant,item)%>%
+      ungroup()%>%
+      ggplot(aes(item,trans_fat,fill=restaurant))+
+      geom_col()+
+      labs(title= "Visualisation for transfat in food items ",x="Food items",caption= "Figure 1")
+```
+
+## Calculate and show the average (mean)  `total_fat` for each type of restaurant. No need to save it as a variable.
+```{r}
+fastfood%>%
+  group_by(restaurant)%>%
+  summarise(averagetotal_fat=mean(total_fat))%>%
+  ungroup()%>%
+  kable()
+
+```
+
+## create a dataviz that allow to compare different restaurants on this variable (`total_fat`).
+```{r}
+fastfood%>%
+  ggplot(aes(restaurant,total_fat))+
+  geom_col()+
+  labs(title="Bar Graph")
+
+```
+
